@@ -200,6 +200,7 @@ class ReadView(context: Context, attrs: AttributeSet) :
             }
 
             MotionEvent.ACTION_MOVE -> {
+                if (!pressDown) return true
                 val absX = abs(startX - event.x)
                 val absY = abs(startY - event.y)
                 if (!isMove) {
@@ -443,9 +444,13 @@ class ReadView(context: Context, attrs: AttributeSet) :
         curPage.selectText(x, y) { textPos ->
             val compare = initialTextPos.compare(textPos)
             when {
-                compare >= 0 -> {
+                compare > 0 -> {
                     curPage.selectStartMoveIndex(textPos)
-                    curPage.selectEndMoveIndex(initialTextPos)
+                    curPage.selectEndMoveIndex(
+                        initialTextPos.relativePagePos,
+                        initialTextPos.lineIndex,
+                        initialTextPos.columnIndex - 1
+                    )
                 }
 
                 else -> {
@@ -514,6 +519,7 @@ class ReadView(context: Context, attrs: AttributeSet) :
         (pageDelegate as? ScrollPageDelegate)?.noAnim = AppConfig.noAnimScrollPage
         if (upRecorder) {
             (pageDelegate as? HorizontalPageDelegate)?.upRecorder()
+            autoPager.upRecorder()
         }
         pageDelegate?.setViewSize(width, height)
         if (isScroll) {
